@@ -12,7 +12,7 @@
 })(this, function () {
 
 	'use strict';
-	var PhotoSwipe = function(template, UiClass, items, options){
+	var PhotoSwipe = function(template, UiClass, items, options, currentGal){
 
 /*>>framework-bridge*/
 /**

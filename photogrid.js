@@ -1,9 +1,16 @@
+/*
+Used to create each row of photos and create grid for display
+Adds width of each photo in row until reaches width greater than the window width
+Then calculates the maximum height of all photos in each row to display is even grid
+*/
+
+
 // global photo spacing
 var spacer = 4;
 
+//calculate the maximum height to use for all photos in a row and make right edge even
 function maxHeightForRow(start, end, widthTotal, maxHeight, maxWidth, widthArray)
 {
-  // console.log("start="+start+" end="+end+" widthTotal="+widthTotal+" maxHeight="+maxHeight+" maxWidth="+maxWidth);
   var dec = false;
   var totalWidth, pWidth, pHeight, scaledW;
   var newHeight = maxHeight;
@@ -11,6 +18,11 @@ function maxHeightForRow(start, end, widthTotal, maxHeight, maxWidth, widthArray
     dec = true;
   }
 
+/*
+main loop through row of photos to calculate the maxHeight for each photo in row
+iterates through the row up to 5000 times with small increments to get right edge
+as close to window width as possible
+*/
   for (var c=0; c<=5000; c++)
   {
     totalWidth = spacer;
@@ -25,7 +37,6 @@ function maxHeightForRow(start, end, widthTotal, maxHeight, maxWidth, widthArray
 
       scaledW = (newHeight/pHeight) * pWidth;
       totalWidth += scaledW + spacer;
-      // console.log("totalWidth ="+totalWidth+", maxWidth="+maxWidth);
     }
     if ((totalWidth <= maxWidth && dec) || (totalWidth >= maxWidth && !dec)) {
       return newHeight;
@@ -35,6 +46,10 @@ function maxHeightForRow(start, end, widthTotal, maxHeight, maxWidth, widthArray
   return maxHeight;
 }
 
+/*
+main function to find number of photos per row, call maxHeightPerRow,
+then build html code for page
+*/
 function photoGrid(currentPhotos)
 {
   var maxHeight = 160;
@@ -42,14 +57,11 @@ function photoGrid(currentPhotos)
   var wTweak = 125;
   var totalWidth = spacer;
 
-
   var winWidth = window.innerWidth-100;
   var rowStart = 0;
   var rowEnd = 0;
   var widthArray = [];
-
   var photoLen = currentPhotos.length;
-  // console.log(currentPhotos.length+", "+winWidth);
 
   if (winWidth > 1200) {
       maxHeight = 225;
@@ -58,14 +70,18 @@ function photoGrid(currentPhotos)
       maxHeight = 125;
   }
 
+// Process through each photo in currentPhotos array
   currentPhotos.forEach(function(value, index) {
-    console.log(value.name);
     var ratio = maxHeight / value.size.h;
     var scaledW = value.size.w * ratio;
     widthArray.push({'w': scaledW, 'h': maxHeight});
     totalWidth += scaledW + spacer;
- 
-    if (totalWidth-winWidth-wTweak > (.7*scaledW)  && totalWidth > winWidth-wTweak) {
+
+/*
+Check if last photo is too large for the row and push to next row if it is
+and if totalWidth of photos in row is greater than the window width
+*/ 
+    if (totalWidth-winWidth-wTweak > (0.7*scaledW) && totalWidth > winWidth-wTweak) {
         rowEnd = index-1;
         var returnHeight = maxHeightForRow(rowStart, rowEnd, totalWidth-scaledW-spacer, maxHeight, winWidth, widthArray);
         var displayPhotos = '<div style="padding: 0px; margin: 0px;">';
@@ -81,9 +97,12 @@ function photoGrid(currentPhotos)
         displayPhotos += '</div>';
         $('.grid').append(displayPhotos);
         rowStart = index;
-        console.log("idx: "+index+", "+scaledW+", "+totalWidth);        
     }
-      
+
+/*
+check if totalWidth of photos in the row is greater than the
+width of the window or if reached the last photo
+*/
     if (totalWidth > winWidth-wTweak || index == photoLen-1) {
         rowEnd = index;
         var returnHeight = maxHeightForRow(rowStart, rowEnd, totalWidth, maxHeight, winWidth, widthArray);
@@ -99,7 +118,8 @@ function photoGrid(currentPhotos)
         }
 
         displayPhotos += '</div>';
-        // console.log(displayPhotos);
+
+// push row of photos to page
         $('.grid').append(displayPhotos);
         rowStart = rowEnd+1;
     }

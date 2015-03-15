@@ -7,198 +7,12 @@
 <script src="http://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
 <script type="text/javascript" src="js-yaml.js"></script>
 <script type="text/javascript" src="photogrid.js"></script>
+<script type="text/javascript" src="creategalleries.js"></script>
 <script type="text/javascript" src="menuscript.js"></script>
 <script type="text/javascript" src="photoswipe.js"></script>
 <script type="text/javascript" src="photoswipe-ui-default.js"></script>
 <script type="text/javascript">
 
-var doc;
-var hostName;
-var hostPort;
-
-var photoLoc, startLoc, galleries;
-var cachedPhotos = {};
-var thumbsPerPage = 50;
-var scrollDone = false;
-var prevYOffset = window.pageYOffset;
-var items;
-var photoArray;
-var currentGal;
-//var hostName = 'photography.stulevine.com';
-//var hostPort = '8080';
-
-//Randomly choose a photo from the Gallery for large intro photo
-function getFirstPhoto(galName) {
-    $('#cssmenu').hide();
-    $('.contactinfo').hide();
-    $.getJSON('http://'+hostName+':'+hostPort+'/api/'+galName,function(response) {
-        var firstP = Math.floor((Math.random() * response.total));
-        var newImage = '/m/i/2/Current/'+response.photos[firstP].name;
-        $(".topPhoto").css("background", 'center no-repeat url("'+newImage+'")');
-        $(".topPhoto").css("width", "100vw");
-        $(".topPhoto").height($(window).height());
-        $(".topPhoto").css("background-size", 'cover');
-        $(".topPhoto").html('<p class="nameloc">Stu Levine Photography</p>');
-    });
-    loadGalleries(); //Call function to create "Galleries" menu
-  }
-
-//Read in list of galleries for menu "Galleries"
-function loadGalleries() {
-    try {
-    $.get('gallery.conf')
-        .done(function (data) {
-            console.log('File load complete');
-            doc=jsyaml.load(data);
-            console.log(doc);
-            hostName = doc.api_host;
-            hostPort = doc.api_port;
-
-            $.ajax('http://'+hostName+':'+hostPort+'/api', {
-                type: 'GET',
-                dataType: 'json',
-                success: function(response) {
-                    galleries = response.galleries;
-                    galleries = galleries.sort();
-                    var galList="";
-	                for (var i=0, gLen=galleries.length; i<gLen; i++) {
-	                    galList += '<li><a onclick="javascript:showOrHideMenu(); javascript:getPhotosForGallery(\''+galleries[i]+'\');"><span>'+galleries[i]+'</span></a></li>';
-	                }
-	                $('#listofgals').html(galList);
-                    var galpassed = getParameterByName('gallery');
-                    if (galpassed !== "") {
-	                    getPhotosForGallery(galpassed);
-                    }
-                    else {
-	                    getPhotosForGallery(galleries[0]);
-                    }
-                }
-            });
-        });
-    }
-    catch (e) {
-        console.log(e);
-    }
-}
-
-function getParameterByName(name)
-{
-    name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
-    //var regex = new RegExp("[\\?&]" + name + "=([^&#]*)"),
-    //results = regex.exec(location.search);
-    //return results === null ? "" : decodeURIComponent(results[1].replace(/\+/g, " "));
-    var kvps = document.location.hash.split('&');
-    params = {};
-    kvps.forEach(function(value, index) {
-        kvp = value.split('=');
-        params[kvp[0]] = kvp[1];
-    });
-    return params[name] === undefined ? "" : decodeURIComponent(params[name]);
-}
-
-//
-function getPhotosForGallery(name) {
-  currentGal = name;
-  // console.log("gallery name="+name);
-  // console.log("cachedPhotos[name]="+cachedPhotos[name]);
-  photoLoc = 25;
-  startLoc = 0;
-  if ((cachedPhotos[name] === null) || (typeof cachedPhotos[name] === 'undefined')) {
-    $.getJSON('http://'+hostName+':'+hostPort+'/api/'+name, function(response) {
-      cachedPhotos[name] = response;
-      processPhotos(cachedPhotos[name]);
-    });
-  } else {
-    processPhotos(cachedPhotos[name]);
-  }
-  $('.galnameloc').html('<p>'+name+'</p>');
-  $('#cssmenu').show();
-}
-
-
-//Import the list of photos from the gallery and display 75 at a time
-function processPhotos(currentPhotos) {
-  $('.grid').html('');
-  photoGrid(currentPhotos.photos);
-  items = currentPhotos.items;
-  var photoPassedIn = getParameterByName('pid');
-  document.location.hash = "";
-  if (photoPassedIn != "") {
-      openPhotoSwipe(parseInt(photoPassedIn)-1);
-  }
-  //history.pushState(null, "", location.href.split("?")[0]);
-}
-
-//Collapse photo when scroll down to reveal first page of photos for gallery
-function didScroll() {
-  $('.nameloc').hide();
-  if (!scrollDone) {
-    var divHeight = $('.topPhoto').height();
-    if (divHeight > 0) {
-      var yHeight = divHeight-window.pageYOffset;
-      if (prevYOffset > window.pageYOffset) {
-          yHeight = divHeight+prevYOffset+window.pageYOffset;
-      }
-      $('.topPhoto').height(yHeight);
-      prevYOffset = window.pageYOffset;
-    }
-    else {
-      scrollDone = true;
-    }
-  }
-}
-
-
-function updatePhoto() {
-  processPhotos(cachedPhotos[currentGal]);
-  // if (!scrollDone) {
-  //   $(".topPhoto").height($(window).height());
-  // }
-}
-
-var openPhotoSwipe = function(x) {
-    var pswpElement = document.querySelectorAll('.pswp')[0];
-
-    // define options (if needed)
-    var options = {
-        index: x,
-        history: true,
-        focus: false,
-        showAnimationDuration: 0,
-        hideAnimationDuration: 0
-    };
-
-    var gallery = new PhotoSwipe( pswpElement, PhotoSwipeUI_Default, items, options);
-    gallery.init();
-};
-
-// Add more content when scroll to bottom of page
-// function yHandler(){
-//   var wrap = document.getElementById('wrap');
-//   var contentHeight = wrap.offsetHeight;
-//   var yOffset = window.pageYOffset;
-//   var y = yOffset + window.innerHeight;
-//   if (y >= contentHeight) {
-//     photoLoc+=thumbsPerPage;
-//     startLoc+=thumbsPerPage;
-//     processPhotos(cachedPhotos[currentGal]);
-//     wrap.innerHTML += '<div class="newData"></div>';
-//   }
-//   var status = document.getElementById('status');
-//   status.innerHTML = contentHeight+" | "+y;
-// }
-
-// window.onscroll = yHandler;
-
-function showOrHideMenu()
-{
-    if ($('#galleryMenu').css('display') == 'block') {
-        $('#galleryMenu').css('display', 'none');
-    }
-    else {
-        $('#galleryMenu').css('display', 'block');
-    }
-}
 
 </script>
 
@@ -217,30 +31,32 @@ function showOrHideMenu()
 
 <body onload="javascript:loadGalleries();" onresize="javascript:updatePhoto();">
 <header>
-  <div id="status">0 | 0</div>
+ <!-- <div id="status">0 | 0</div> -->
   <div class="topPhoto"></div>
 
+<!-- display contact info -->
   <span class="contactinfo">p: 917-000-0000 e: me@stulevine.com <br /> &copy; 2015 Stu Levine</span>
 </header>
 
 <nav id='cssmenu'>
 <ul>
    <li class='active'><a href='#'><span>Home</span></a></li>
-   <li class='has-sub'><a href='#' onclick="javascript:showOrHideMenu();"><span>Galleries</span></a>
+   <li class='has-sub'><a href='#' onclick="javascript:showOrHideMenu('#galleryMneu');"><span>Galleries</span></a>
       <ul id='galleryMenu'>
 	       <div id='listofgals'>
 	       </div>
       </ul>
    </li>
-   <li class='has-sub'><a href='#'><span>About</span></a></li>
+   <li class='has-sub'><a href='#'><span>About</span></a><ul></ul></li>
    <li class='last'><a href='#'><span>Contact</span></a></li>
 </ul>
 </nav>
 
+<!-- div container for Gallery Name at top of page -->
 <div class="galnameloc">
 </div>
 
-
+<!-- div container for thumbnails display -->
 <div class="grid" style="display: table; margin: auto;">
 </div>
 
