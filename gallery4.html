@@ -1,0 +1,286 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<title>Stu Levine Photography</title>
+<meta charset="UTF-8">
+
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+<script type="text/javascript" src="gridify.js"></script>
+<script type="text/javascript" src="menuscript.js"></script>
+<script type="text/javascript" src="photoswipe.js"></script>
+<script type="text/javascript" src="photoswipe-ui-default.js"></script>
+<script type="text/javascript">
+
+var photoLoc=75, startLoc=0, galleries, totalphotos;
+var thumbsPerPage = photoLoc
+var scrollDone = false;
+var prevYOffset = window.pageYOffset;
+var items;
+var photoArray;
+var hostName = 'blackhole.local';
+var hostPort = '8080';
+
+//Randomly choose a photo from the Gallery for large intro photo
+function getFirstPhoto(galName) {
+    $('#cssmenu').hide();
+    $('.prev').hide();
+    $('.next').hide();
+    $('.contactinfo').hide();
+    $.getJSON('http://'+hostName+':'+hostPort+'/api/'+galName,function(response) {
+        var firstP = Math.floor((Math.random() * response.total));
+        var newImage = '/m/i/2/Current/'+response.photos[firstP].name;
+        $(".topPhoto").css("background", 'center no-repeat url("'+newImage+'")');
+        $(".topPhoto").css("width", "100vw");
+        $(".topPhoto").height($(window).height());
+        $(".topPhoto").css("background-size", 'cover');
+        $(".topPhoto").html('<p class="nameloc">Stu Levine Photography</p>');
+    });
+    loadGalleries(); //Call function to create "Galleries" menu
+}
+
+function hideMenu()
+{
+    $('#listofgals').hide();
+}
+
+//Read in list of galleries for menu "Galleries"
+function loadGalleries() {
+    $('.prev').hide();
+    $.ajax('http://'+hostName+':'+hostPort+'/api', {
+      type: 'GET',
+      dataType: 'json',
+      success: function(response) {
+       galleries = response.galleries;
+       galleries = galleries.sort();
+       var galList="";
+	     for (var i=0, gLen=galleries.length; i<gLen; i++) {
+	       galList = galList + '<li><a onclick="javascript:getPhotosForGallery(\''+galleries[i]+'\');"><span>'+galleries[i]+'</span></a></li>';
+         console.log(galList);
+	     }
+	     $('#listofgals').html(galList);
+       console.log(galleries[0]);
+	     getPhotosForGallery(galleries[0]); //Read in first 25 photos from gallery
+      }
+    });
+}
+
+//Import the list of photos from the gallery and display 25 at a time
+function getPhotosForGallery(name) {
+    console.log(name);
+    $.getJSON('http://'+hostName+':'+hostPort+'/api/'+name,function(response) {
+      if (photoLoc > response.total) {
+        photoLoc = response.total;
+        $('.next').hide();
+      }
+      items = response.items;
+      var photos = $.map(response.photos, function(photo, i) {
+        if (i>=startLoc && i<photoLoc) {
+		      var displayPhotos = $('<a onclick="javascript:openPhotoSwipe('+i+');"><img id="i'+i+'" src="'+photo.href+'" style="opacity: 0; transition: opacity '+i+'0ms ease-in-out;" /></a>');
+        }
+		    return displayPhotos;
+	    });
+      $('.galnameloc').html('<p>'+name+'</p>');
+      $('.grid').html(photos);
+      gridMe();
+      $('#cssmenu').show();
+    });
+}
+
+//Collapse photo when scroll down to reveal first page of photos for gallery
+function didScroll() {
+  $('.nameloc').hide();
+  if (!scrollDone) {
+    var divHeight = $('.topPhoto').height();
+    if (divHeight > 0) {
+      var yHeight = divHeight-window.pageYOffset;
+      if (prevYOffset > window.pageYOffset) {
+          yHeight = divHeight+prevYOffset+window.pageYOffset;
+      }
+      $('.topPhoto').height(yHeight);
+      prevYOffset = window.pageYOffset;
+    }
+    else {
+      scrollDone = true;
+      $('.next').show();
+    }
+  }
+}
+
+function updatePhoto() {
+  if (!scrollDone) {
+    $(".topPhoto").height($(window).height());
+  }
+}
+
+//Show next thumbsPerPage photos for the gallery
+function nextPhotos() {
+  photoLoc+=thumbsPerPage;
+  startLoc+=thumbsPerPage;
+  $('.prev').show();
+  getPhotosForGallery(galleries[0]);
+}
+
+//Show previous 25 photos for the gallery
+function prevPhotos() {
+  photoLoc-=thumbsPerPage;
+  startLoc-=thumbsPerPage;
+  $('.next').show();
+  if (startLoc === 0) $('.prev').hide();
+  getPhotosForGallery(galleries[0]);
+}
+
+//Create photo grid
+function gridMe() {
+    var options =
+    {
+	     srcNode: 'img',             // grid items (class, node)
+	     margin: '5px',             // margin in pixel, default: 0px
+	     width: '200px',           // grid item width in pixel, default: 220px
+	     max_width: '',              // dynamic grid item width if specified, (pixel)
+	     resizable: true             // re-layout if window resize
+    }
+    $('.grid').gridify(options);
+}
+
+var openPhotoSwipe = function(x) {
+  console.log("openPhotoSwipe called")
+    var pswpElement = document.querySelectorAll('.pswp')[0];
+    console.log(pswpElement);
+
+    // define options (if needed)
+    var options = {
+        index: x,
+             // history & focus options are disabled on CodePen
+        history: true,
+        focus: false,
+
+        showAnimationDuration: 0,
+        hideAnimationDuration: 0
+
+    };
+
+    var gallery = new PhotoSwipe( pswpElement, PhotoSwipeUI_Default, items, options);
+    gallery.init();
+};
+
+//openPhotoSwipe();
+
+//$('#btn').onclick = openPhotoSwipe();
+
+</script>
+
+<link rel="stylesheet" href="gallery.css" />
+<link rel="stylesheet" href="photoswipe.css" />
+<link rel="stylesheet" href="default-skin.css" />
+<link href='http://fonts.googleapis.com/css?family=Muli|Open+Sans' rel='stylesheet' type='text/css' />
+</head>
+
+
+<body onload="javascript:loadGalleries();" onscroll="javascript:didScroll();" onresize="javascript:updatePhoto();">
+<header>
+<div class="topPhoto">
+</div>
+
+<span class="contactinfo">p: 917-000-0000 e: me@stulevine.com <br /> &copy; 2015 Stu Levine</span>
+</header>
+
+<nav id='cssmenu'>
+<ul>
+   <li class='active'><a href='#'><span>Home</span></a></li>
+   <li class='has-sub'><a href='#'><span>Galleries</span></a>
+      <ul>
+	       <div id='listofgals'>
+	       </div>
+      </ul>
+   </li>
+   <li class='has-sub'><a href='#'><span>About</span></a></li>
+   <li class='last'><a href='#'><span>Contact</span></a></li>
+</ul>
+</nav>
+
+<div class="galnameloc">
+</div>
+
+<div>
+  <p></p>
+  <a class="next" href='#' onclick="javascript:nextPhotos();">Next</a>
+  <a class="prev" href='#' onclick="javascript:prevPhotos();">Previous</a>
+  <p></p>
+</div>
+
+<div class="grid">
+</div>
+
+<!--<button id="btn" onclick="javascript:openPhotoSwipe();">Open PhotoSwipe</button>
+
+<button class="btn">Open PhotoSwipe</button>-->
+
+<!-- Root element of PhotoSwipe. Must have class pswp. -->
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    <!-- Background of PhotoSwipe.
+         It's a separate element as animating opacity is faster than rgba(). -->
+    <div class="pswp__bg"></div>
+
+    <!-- Slides wrapper with overflow:hidden. -->
+    <div class="pswp__scroll-wrap">
+
+        <!-- Container that holds slides.
+            PhotoSwipe keeps only 3 of them in the DOM to save memory.
+            Don't modify these 3 pswp__item elements, data is added later on. -->
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        <!-- Default (PhotoSwipeUI_Default) interface on top of sliding area. Can be changed. -->
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                <!--  Controls are self-explanatory. Order can be changed. -->
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                <!-- Preloader demo http://codepen.io/dimsemenov/pen/yyBWoR -->
+                <!-- element will get class pswp__preloader--active when preloader is running -->
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                      <div class="pswp__preloader__cut">
+                        <div class="pswp__preloader__donut"></div>
+                      </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+</body>
+</html>
