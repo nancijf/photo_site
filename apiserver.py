@@ -31,11 +31,11 @@ dbUser = doc['dbUser']
 dbPass = doc['dbPass']
 
 if dbName is not None and dbUser is not None and dbPass is not None:
-    #session_id = dbClient.connect(dbUser, dbPass)
     #r = dbClient.command("select * from metaData where gallery='"+urllib.unquote(action)+"' and name='"+urllib.unquote(photo)+"'")
     #datetime = r[0].exif['DateTime']
 
     dbClient = pyorient.OrientDB("localhost", 2424)
+    session_id = dbClient.connect(dbUser, dbPass)
 
     if dbClient.db_exists(dbName):
         dbClient.db_open(dbName, dbUser, dbPass)
