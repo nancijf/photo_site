@@ -14,13 +14,10 @@ from operator import itemgetter
 from os.path import *
 import yaml
 
-stream = open('gallery.conf', 'r')
+stream = open('/usr/local/etc/gallery.conf', 'r')
 doc = yaml.load(stream);
 stream.close()
 
-#HOST_NAME = 'einstein.local' # !!!REMEMBER TO CHANGE THIS!!!
-#API_HOST = '0.0.0.0'
-#API_PORT = 8080 # Maybe set this to 9000.
 API_HOST = doc['listen']
 API_PORT = doc['api_port']
 home = os.getcwd() + '/'
@@ -29,20 +26,25 @@ galleryPath = home + galleryFolder + "/"
 logfile = open(home+"http.log",'a+')
 
 # DB Stuff here
-dbName = "photoMetaData"
-dbUser = "root"
-dbPass = "w1z@rd1!"
-#dbClient = pyorient.OrientDB("localhost", 2424)
+dbName = doc['dbName']
+dbUser = doc['dbUser']
+dbPass = doc['dbPass']
+
+print "%s, %s, %s" %(dbName, dbUser, dbPass)
+
 #session_id = dbClient.connect(dbUser, dbPass)
 #r = dbClient.command("select * from metaData where gallery='"+urllib.unquote(action)+"' and name='"+urllib.unquote(photo)+"'")
 #datetime = r[0].exif['DateTime']
 
+dbClient = pyorient.OrientDB("localhost", 2424)
+
 #if not dbClient.db_exists(dbName):
 #    sys.exit(1)
 
-#dbClient.db_open(dbName, dbUser, dbPass)
-#cluster_id = dbClient.command("select classes[name='metaData'].defaultClusterId from 0:1");
-
+dbClient.db_open(dbName, dbUser, dbPass)
+cluster_id = dbClient.command("select classes[name='metaData'].defaultClusterId from 0:1")
+print "ClusterID: %s" % str(cluster_id)
+dbClient.db_close()
 
 class MyHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     debug = False

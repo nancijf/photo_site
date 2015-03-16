@@ -11,8 +11,8 @@ var items;
 var photoArray;
 var currentGal;
 var galMenuShown = false;
-//var hostName = 'photography.stulevine.com';
-//var hostPort = '8080';
+var hostName;
+var hostPort;
 
 //Method used to enlarge thumbnails and view as gallery
 var openPhotoSwipe = function(x) {
