@@ -1,0 +1,9 @@
+# base config stuff
+api_host: photography.stulevine.com
+api_port: 8080
+listen: photography.stulevine.com
+
+# database
+dbName: 
+dbUser: 
+dbPass: 
