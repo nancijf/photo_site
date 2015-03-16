@@ -51,7 +51,7 @@ function getFirstPhoto(galName) {
 //Make ajax call to read JSON file for menu
 function loadGalleries() {
     try {
-    $.get('gallery.conf')
+    $.get('gallery.js.conf')
         .done(function (data) {
             console.log('File load complete');
             doc=jsyaml.load(data);
