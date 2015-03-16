@@ -30,22 +30,20 @@ dbName = doc['dbName']
 dbUser = doc['dbUser']
 dbPass = doc['dbPass']
 
-print "%s, %s, %s" %(dbName, dbUser, dbPass)
+if dbName is not None and dbUser is not None and dbPass is not None:
+    #session_id = dbClient.connect(dbUser, dbPass)
+    #r = dbClient.command("select * from metaData where gallery='"+urllib.unquote(action)+"' and name='"+urllib.unquote(photo)+"'")
+    #datetime = r[0].exif['DateTime']
 
-#session_id = dbClient.connect(dbUser, dbPass)
-#r = dbClient.command("select * from metaData where gallery='"+urllib.unquote(action)+"' and name='"+urllib.unquote(photo)+"'")
-#datetime = r[0].exif['DateTime']
+    dbClient = pyorient.OrientDB("localhost", 2424)
 
-dbClient = pyorient.OrientDB("localhost", 2424)
+    if dbClient.db_exists(dbName):
+        dbClient.db_open(dbName, dbUser, dbPass)
+        cluster_id = dbClient.command("select classes[name='metaData'].defaultClusterId from 0:1")
+        print "ClusterID: %s" % str(cluster_id)
+        dbClient.db_close()
 
-#if not dbClient.db_exists(dbName):
-#    sys.exit(1)
-
-dbClient.db_open(dbName, dbUser, dbPass)
-cluster_id = dbClient.command("select classes[name='metaData'].defaultClusterId from 0:1")
-print "ClusterID: %s" % str(cluster_id)
-dbClient.db_close()
-
+        
 class MyHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     debug = False
 
