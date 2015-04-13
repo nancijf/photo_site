@@ -8,7 +8,7 @@ This is a photo gallery viewer designed to take a folder of JPEG images and disp
 
 There are two components present, a simple API server written in python and a web site that needs to run under a web server such as nginx or apache.
 
-view a demo of this site: photography.stulevine.com
+view a demo of this site: http://photography.stulevine.com
  
 ### How do I get set up? ###
 
