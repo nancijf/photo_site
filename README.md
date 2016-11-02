@@ -14,3 +14,4 @@ view a demo of this site: http://photography.stulevine.com
 
 * Install nginx or apache
 * Copy this repo to the web server documents directory
+* Languages used are HTML, CSS, Javascript and Python
